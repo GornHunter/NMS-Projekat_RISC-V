@@ -1,16 +1,10 @@
 //OPIS: obican for
-//RETURN: 4
-
-int fun(int i){
-	return i;
-}
+//RETURN: 3
 
 int main(){
 	int i;
-	int j;
 	
-	j = 2;
-	i = fun(j) + 2;
+	i = 3;
 	    
 	return i;
 }

@@ -1,0 +1,7 @@
+1.potrebno je instalirati flex, bison i make alate
+2.u ovom folderu pokrenite komandu make test - tu ce se videti da su svi testovi prosli(test-ok testovi su ispravni, 
+test-semerr su semanticki neispravi, test-synerr su sintaksni neispravni i test-sanity je cista provera rada programa)
+3.u testu ok3 sam pokrio sve dodatne funkcionalnosti koje sam implementirao(to su while i for petlja i ternarni iskaz)
+4.projekat je radjen na fajlovima micko.l i micko.y dok sam ostale dobio od kao pomocni materijal
+5.za detaljnije informacije o rezultatu testa ili informaciji zasto je test pao pokrenuti komandu make det
+6.u .asm fajlovima mozete videti izgenerisani asemblerski kod

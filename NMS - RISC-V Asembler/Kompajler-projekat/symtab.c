@@ -188,12 +188,33 @@ void init_symtab(void) {
 
   int i = 0;
   char s[4];
-  for(i = 0; i < 14; i++) {
+  // i < 14
+  for(i = 0; i < 7; i++) {
     //sprintf(s, "%%%d", i);
 	
-	
-	sprintf(s, "%%%d", i);
+	sprintf(s, "t%d", i);
+
     insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
   }
+  
+  for(i = 0; i < 12; i++) {
+    //sprintf(s, "%%%d", i);
+	
+	sprintf(s, "s%d", i);
+
+    insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
+  }
+  
+  sprintf(s, "ra");
+  insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
+  
+  sprintf(s, "sp");
+  insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
+  
+  sprintf(s, "a7");
+  insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
+  
+  sprintf(s, "a0");
+  insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
 }
 

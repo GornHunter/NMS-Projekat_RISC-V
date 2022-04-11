@@ -160,6 +160,8 @@ body
 		  
           //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
 		}
+		
+		print_symtab();
         code("\n@%s_body:", get_name(fun_idx));
       }
     statement_list _RBRACKET

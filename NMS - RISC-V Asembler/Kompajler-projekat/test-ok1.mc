@@ -6,5 +6,5 @@ int main(){
 	
 	i = 3;
 	    
-	return i + 2;
+	return i;
 }

@@ -100,7 +100,7 @@ function
       }
     _LPAREN parameter _RPAREN body
       {
-		code("\n@%s_exit:", $2);
+		code("\n%s_exit:", $2);
 		
 		if(var_num){
 			int tmp1 = var_num;
@@ -162,7 +162,7 @@ body
 		}
 		
 		print_symtab();
-        code("\n@%s_body:", get_name(fun_idx));
+        code("\n%s_body:", get_name(fun_idx));
       }
     statement_list _RBRACKET
   ;
@@ -267,7 +267,20 @@ assignment_statement
         else
           if(get_type(idx) != get_type($3))
             err("incompatible types in assignment");
-        gen_mov($3, idx);
+			
+		if(get_kind($3) == LIT){
+		  code("\n\t\tli\t\t");
+		  gen_sym_name(idx);
+		  code(", ");
+		  gen_sym_name($3);
+		}
+		else{
+		  gen_mov_risc(idx, $3);
+		}
+		
+		
+			
+        //gen_mov($3, idx);
       }
   ;
 
@@ -420,7 +433,7 @@ return_statement
         if(get_type(fun_idx) != get_type($2))
           err("incompatible types in return");
         gen_mov($2, FUN_REG);
-        code("\n\t\tJMP \t@%s_exit", get_name(fun_idx));        
+        code("\n\t\tj\t\t%s_exit", get_name(fun_idx));        
       }
   ;
 

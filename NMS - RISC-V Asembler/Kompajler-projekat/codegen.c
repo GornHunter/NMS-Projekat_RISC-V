@@ -35,6 +35,7 @@ void free_if_reg(int reg_index) {
 }
 
 // SYMBOL
+//nastavlja se
 void gen_sym_name(int index) {
   if(index > -1) {
     if(get_kind(index) == VAR) // -n*4(%14)
@@ -43,8 +44,11 @@ void gen_sym_name(int index) {
       if(get_kind(index) == PAR) // m*4(%14)
         code("%d(%%14)", 4 + get_atr1(index) *4);
       else
-        if(get_kind(index) == LIT)
-          code("$%s", get_name(index));
+        if(get_kind(index) == LIT){
+          code("%s", get_name(index));
+		  
+		  //code("$%s", get_name(index));
+		}
         else //function, reg
           code("%s", get_name(index));
   }
@@ -67,8 +71,20 @@ void gen_cmp(int op1_index, int op2_index) {
 void gen_mov(int input_index, int output_index) {
   code("\n\t\tMOV \t");
   gen_sym_name(input_index);
-  code(",");
+  code(", ");
   gen_sym_name(output_index);
+
+  //ako se smešta u registar, treba preneti tip 
+  if(output_index >= 0 && output_index <= LAST_WORKING_REG)
+    set_type(output_index, get_type(input_index));
+  free_if_reg(input_index);
+}
+
+void gen_mov_risc(int output_index, int input_index) {
+  code("\n\t\tmv\t\t");
+  gen_sym_name(output_index);
+  code(", ");
+  gen_sym_name(input_index);
 
   //ako se smešta u registar, treba preneti tip 
   if(output_index >= 0 && output_index <= LAST_WORKING_REG)

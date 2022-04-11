@@ -15,7 +15,10 @@
   char char_buffer[CHAR_BUFFER_LENGTH];
   int error_count = 0;
   int warning_count = 0;
+  
   int var_num = 0;
+  int tmp = 0;
+  
   int fun_idx = -1;
   int fcall_idx = -1;
   int lab_num = -1;
@@ -84,19 +87,45 @@ function
         else 
           err("redefinition of function '%s'", $2);
 
-        code("\n%s:", $2);
-        code("\n\t\tPUSH\t%%14");
-        code("\n\t\tMOV \t%%15,%%14");
+
+		code(".data\n");
+		code("str1:\t.string \"Result is \"\n\n");
+		code(".text\n");
+        code("%s:", $2);
+		
+		
+		
+        //code("\n\t\tPUSH\t%%14");
+        //code("\n\t\tMOV \t%%15,%%14");
       }
     _LPAREN parameter _RPAREN body
       {
+		code("\n@%s_exit:", $2);
+		
+		if(var_num){
+			int tmp1 = var_num;
+			for(int i = 0;i < var_num;i++){
+				tmp1 -= 1;
+				code("\n\t\tlw\t\t%s, %d(sp)", get_name(tmp1), tmp);
+				tmp += 4;
+				free_if_reg(tmp1);
+			}
+		
+			code("\n\t\taddi\tsp, sp, %d\n", 4 * var_num);
+		}
+		
+		code("\n\t\tli a7, 10");
+		code("\n\t\tecall");
+		
+		
         clear_symbols(fun_idx + 1);
         var_num = 0;
         
-        code("\n@%s_exit:", $2);
-        code("\n\t\tMOV \t%%14,%%15");
-        code("\n\t\tPOP \t%%14");
-        code("\n\t\tRET");
+		
+		
+        //code("\n\t\tMOV \t%%14,%%15");
+        //code("\n\t\tPOP \t%%14");
+        //code("\n\t\tRET");
       }
   ;
 
@@ -115,8 +144,22 @@ parameter
 body
   : _LBRACKET variable_list
       {
-        if(var_num)
-          code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
+        if(var_num){
+		  code("\n\t\taddi\tsp, sp, -%d", 4 * var_num);
+		  
+		  tmp = var_num;
+		  for(int i = 0;i < var_num;i++){
+			int reg = take_reg();
+			//set_type(reg, get_type($2));
+			
+			code("\n\t\tsw\t\t");
+			gen_sym_name(reg);
+			code(", %d(sp)", (4 * tmp) - 4);
+			tmp -= 1;
+		  }
+		  
+          //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
+		}
         code("\n@%s_body:", get_name(fun_idx));
       }
     statement_list _RBRACKET
@@ -134,6 +177,7 @@ variable
            insert_symbol($2, VAR, $1, ++var_num, NO_ATR);
         else 
            err("redefinition of '%s'", $2);
+		   
       }
   ;
 

@@ -267,10 +267,10 @@ assignment_statement
         else
           if(get_type(idx) != get_type($3))
             err("incompatible types in assignment");
-			
+		
+		
 		if(get_kind($3) == LIT){
-		  code("\n\t\tli\t\t");
-		  gen_sym_name(idx);
+		  code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - 1));
 		  code(", ");
 		  gen_sym_name($3);
 		}
@@ -432,7 +432,18 @@ return_statement
       {
         if(get_type(fun_idx) != get_type($2))
           err("incompatible types in return");
-        gen_mov($2, FUN_REG);
+		  
+        //gen_mov($2, FUN_REG);
+		
+		
+		code("\n\n\t\tla\t\ta0, str1\n");
+		code("\t\tli\t\ta7, 4\n");
+		code("\t\tecall\n");
+
+		gen_mov_risc(FUN_REG, $2);
+		code("\n\t\tli\t\ta7, 1\n");
+		code("\t\tecall\n");
+		
         code("\n\t\tj\t\t%s_exit", get_name(fun_idx));        
       }
   ;

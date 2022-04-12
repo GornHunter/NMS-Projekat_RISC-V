@@ -83,8 +83,8 @@ void gen_mov(int input_index, int output_index) {
 void gen_mov_risc(int output_index, int input_index) {
   code("\n\t\tmv\t\t");
   gen_sym_name(output_index);
-  code(", ");
-  gen_sym_name(input_index);
+  code(", %s", get_name(get_atr1(input_index) - 1));
+  //gen_sym_name(input_index);
 
   //ako se smešta u registar, treba preneti tip 
   if(output_index >= 0 && output_index <= LAST_WORKING_REG)

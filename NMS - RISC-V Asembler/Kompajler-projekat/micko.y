@@ -269,7 +269,9 @@ assignment_statement
 		
 		
 		if(get_kind($3) == LIT){
-		  code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - 1));
+		  //code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - 1));
+		  code("\n\t\tli\t\t");
+		  gen_sym_name(idx);
 		  code(", ");
 		  gen_sym_name($3);
 		}
@@ -290,24 +292,31 @@ num_exp
         if(get_type($1) != get_type($3))
           err("invalid operands: arithmetic operation");
 		  
-		//print_symtab();
 		int t1 = get_type($1);
+		
+		free_if_reg($3);
+		free_if_reg($1);
+		
 		if(get_kind($3) == LIT)
 			code("\n\t\taddi\t");
 		else
 			code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
+		
 		 
 		$$ = take_reg();
         gen_sym_name($$);
         set_type($$, t1);
 		
-		code(", %s", get_name(get_atr1($1) - 1));
-		//gen_sym_name($1);
+		print_symtab();
+		
 		code(", ");
-		if(get_kind($3) == LIT)
+		gen_sym_name($1);
+		code(", ");
+		gen_sym_name($3);
+		/*if(get_kind($3) == LIT)
 			gen_sym_name($3);
 		else if(get_kind($1) != LIT || get_kind($3) != LIT)
-			code("%s", get_name(get_atr1($3) - 1));
+			code("%s", get_name(get_atr1($3) - 1));*/
 			
         //free_if_reg($3);
         //free_if_reg($1);

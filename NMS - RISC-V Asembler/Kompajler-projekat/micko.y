@@ -161,7 +161,6 @@ body
           //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
 		}
 		
-		print_symtab();
         code("\n%s_body:", get_name(fun_idx));
       }
     statement_list _RBRACKET
@@ -290,17 +289,46 @@ num_exp
       {
         if(get_type($1) != get_type($3))
           err("invalid operands: arithmetic operation");
-        int t1 = get_type($1);    
-        code("\n\t\t%s\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
+		  
+		//print_symtab();
+		int t1 = get_type($1);
+		if(get_kind($3) == LIT)
+			code("\n\t\taddi\t");
+		else
+			code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
+		 
+		$$ = take_reg();
+        gen_sym_name($$);
+        set_type($$, t1);
+		
+		code(", %s", get_name(get_atr1($1) - 1));
+		//gen_sym_name($1);
+		code(", ");
+		if(get_kind($3) == LIT)
+			gen_sym_name($3);
+		else if(get_kind($1) != LIT || get_kind($3) != LIT)
+			code("%s", get_name(get_atr1($3) - 1));
+			
+        //free_if_reg($3);
+        //free_if_reg($1);
+		
+		
+		
+		
+		 
+		  
+		  
+        /*int t1 = get_type($1);    
+        code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
         gen_sym_name($1);
-        code(",");
+        code(", ");
         gen_sym_name($3);
-        code(",");
+        code(", ");
         free_if_reg($3);
         free_if_reg($1);
         $$ = take_reg();
         gen_sym_name($$);
-        set_type($$, t1);
+        set_type($$, t1);*/
       }
   ;
 
@@ -440,6 +468,8 @@ return_statement
 		code("\t\tli\t\ta7, 4\n");
 		code("\t\tecall\n");
 
+		//printf("\nRET: %d\n", FUN_REG);
+		//printf("RET: %d\n", $2);
 		gen_mov_risc(FUN_REG, $2);
 		code("\n\t\tli\t\ta7, 1\n");
 		code("\t\tecall\n");

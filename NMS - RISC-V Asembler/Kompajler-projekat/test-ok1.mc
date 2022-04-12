@@ -6,7 +6,7 @@ int main(){
 	int j;
 	
 	j = 3;
-	i = 2;
+	i = j + j + 1;
 	    
-	return j;
+	return i;
 }

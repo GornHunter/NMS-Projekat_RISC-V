@@ -81,11 +81,21 @@ void gen_mov(int input_index, int output_index) {
 }
 
 void gen_mov_risc(int output_index, int input_index) {
-  code("\n\t\tmv\t\t");
-  gen_sym_name(output_index);
-  code(", %s", get_name(get_atr1(input_index) - 1));
-  //gen_sym_name(input_index);
-
+  if(get_kind(output_index) == REG){
+	code("\n\t\tmv\t\t");
+	gen_sym_name(output_index);
+	code(", %s", get_name(get_atr1(input_index) - 1));
+	//gen_sym_name(input_index);
+  }
+  else if(get_kind(output_index) == VAR){
+	code("\n\t\tmv\t\t%s", get_name(get_atr1(output_index) - 1));
+	//gen_sym_name(output_index);
+	//code(", %s", get_name(get_atr1(input_index) - 1));
+	code(", ");
+	gen_sym_name(input_index);
+  }
+  
+  
   //ako se smešta u registar, treba preneti tip 
   if(output_index >= 0 && output_index <= LAST_WORKING_REG)
     set_type(output_index, get_type(input_index));

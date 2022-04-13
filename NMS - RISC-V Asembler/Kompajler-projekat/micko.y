@@ -297,7 +297,9 @@ num_exp
 		free_if_reg($3);
 		free_if_reg($1);
 		
-		if(get_kind($3) == LIT)
+		if(get_kind($3) == LIT && $2 == 0)
+			code("\n\t\taddi\t");
+		else if(get_kind($3) == LIT && $2 == 1)
 			code("\n\t\taddi\t");
 		else
 			code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
@@ -307,12 +309,17 @@ num_exp
         gen_sym_name($$);
         set_type($$, t1);
 		
-		print_symtab();
+		//print_symtab();
 		
 		code(", ");
 		gen_sym_name($1);
 		code(", ");
-		gen_sym_name($3);
+		
+		if(get_kind($3) == LIT && $2 == 1)
+			code("-%s", get_name($3));
+		else
+			gen_sym_name($3);
+		
 		/*if(get_kind($3) == LIT)
 			gen_sym_name($3);
 		else if(get_kind($1) != LIT || get_kind($3) != LIT)

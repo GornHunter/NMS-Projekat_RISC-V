@@ -11,6 +11,7 @@ int main(){
 	k = 6;
 	i = j + (((j + 1) + k) + 2);
 	g = i + j;
+	g = g - j;
 	    
 	return g;
 }

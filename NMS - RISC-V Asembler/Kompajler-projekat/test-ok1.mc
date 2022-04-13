@@ -8,11 +8,13 @@ int main(){
 	//int k;
 	
 	j = 3;
-	i = j / j;
+	i = j / j * 3;
+	//i = j * j + 5 / 3;
 	//k = 6;
 	//i = j + (((j + 1) + k) + 2);
 	//g = i + j;
 	//g = g * j;
-	    
+	
+	
 	return i;
 }

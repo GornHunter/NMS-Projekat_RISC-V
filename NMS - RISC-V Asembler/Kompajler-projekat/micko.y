@@ -30,6 +30,7 @@
   int ternary_num = -1;
   
   int multiplication_num = -1;
+  int division_num = -1;
 %}
 
 %union {
@@ -355,12 +356,53 @@ num_exp
 			free_if_reg(reg1);
 			//print_symtab();
 		}
+		else if(get_kind($3) == LIT && $2 == 3){
+			division_num++;
+			$$ = take_reg();
+			set_type($$, t1);
+			code("\n\n\t\tli\t\t");
+			gen_sym_name($$);
+			code(", 0\n");
+			
+			int reg1 = take_reg();
+			code("\t\tmv\t\t");
+			gen_sym_name(reg1);
+			set_type(reg1, t1);
+			code(", %s\n", get_name(get_atr1($1) - 1));
+			
+			code("div%d:\n", division_num);
+			
+			code("\t\taddi\t");
+			gen_sym_name(reg1);
+			code(", ");
+			gen_sym_name(reg1);
+			code(", -%s\n", get_name($3));
+			
+			code("\t\tblt\t\t");
+			gen_sym_name(reg1);
+			code(", zero, div%d_exit\n", division_num);
+			
+			code("\t\taddi\t");
+			gen_sym_name($$);
+			code(", ");
+			gen_sym_name($$);
+			code(", 1\n");
+			
+			code("\t\tj\t\tdiv%d\n", division_num);
+			code("div%d_exit:\n", division_num);
+			
+			free_if_reg(reg1);
+		}
 		else
 			code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
 		
 		
 		
-		if((get_kind($3) != LIT && $2 != 2) || (get_kind($3) != LIT && $2 == 2) || (get_kind($3) == LIT && $2 == 0) || (get_kind($3) == LIT && $2 == 1)){
+		if((get_kind($3) != LIT && $2 != 2) || 
+		   (get_kind($3) != LIT && $2 == 2) || 
+		   (get_kind($3) == LIT && $2 == 0) || 
+		   (get_kind($3) == LIT && $2 == 1)){
+		
 			$$ = take_reg();
 			gen_sym_name($$);
 			set_type($$, t1);

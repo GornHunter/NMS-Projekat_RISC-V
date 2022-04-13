@@ -34,6 +34,9 @@
 "+"                  { yylval.i = ADD; return _AROP; }
 "-"                  { yylval.i = SUB; return _AROP; }
 
+"*"					 { yylval.i = MUL; return _AROP; }
+"/"					 { yylval.i = DIV; return _AROP; }
+
 "<"                  { yylval.i = LT; return _RELOP; }
 ">"                  { yylval.i = GT; return _RELOP; }
 "<="                 { yylval.i = LE; return _RELOP; }

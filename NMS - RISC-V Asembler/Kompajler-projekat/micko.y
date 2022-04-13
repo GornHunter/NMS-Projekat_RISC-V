@@ -28,6 +28,8 @@
   int if_num = -1;
   int while_num = -1;
   int ternary_num = -1;
+  
+  int multiplication_num = -1;
 %}
 
 %union {
@@ -301,38 +303,93 @@ num_exp
 			code("\n\t\taddi\t");
 		else if(get_kind($3) == LIT && $2 == 1)
 			code("\n\t\taddi\t");
+		else if(get_kind($3) == LIT && $2 == 2){
+			multiplication_num++;
+			
+			$$ = take_reg();
+			set_type($$, t1);
+			code("\n\n\t\tli\t\t");
+			gen_sym_name($$);
+			code(", 0\n");
+			
+			int reg1 = take_reg();
+			code("\t\tli\t\t");
+			gen_sym_name(reg1);
+			set_type(reg1, t1);
+			code(", 0\n");
+			
+			int reg2 = take_reg();
+			code("\t\tli\t\t");
+			gen_sym_name(reg2);
+			set_type(reg2, t1);
+			code(", %s\n", get_name($3));
+			
+			code("mul%d:\n", multiplication_num);
+			code("\t\tbeq\t\t");
+			gen_sym_name($$);
+			code(", ");
+			gen_sym_name(reg2);
+			code(", mul%d_end\n", multiplication_num);
+			
+			code("\t\tadd\t\t");
+			gen_sym_name($$);
+			code(", ");
+			gen_sym_name($$);
+			code(", %s\n", get_name(get_atr1($1) - 1));
+			
+			code("\t\taddi\t");
+			gen_sym_name(reg1);
+			code(", ");
+			gen_sym_name(reg1);
+			code(", 1\n");
+			
+			code("\t\tblt\t\t");
+			gen_sym_name(reg1);
+			code(", ");
+			gen_sym_name(reg2);
+			code(", mul%d\n", multiplication_num);
+			
+			code("mul%d_end:\n", multiplication_num);
+			
+			free_if_reg(reg2);
+			free_if_reg(reg1);
+			//print_symtab();
+		}
 		else
 			code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
 		
-		 
-		$$ = take_reg();
-        gen_sym_name($$);
-        set_type($$, t1);
 		
-		//print_symtab();
 		
-		code(", ");
-		gen_sym_name($1);
-		code(", ");
+		if((get_kind($3) != LIT && $2 != 2) || (get_kind($3) != LIT && $2 == 2) || (get_kind($3) == LIT && $2 == 0) || (get_kind($3) == LIT && $2 == 1)){
+			$$ = take_reg();
+			gen_sym_name($$);
+			set_type($$, t1);
 		
-		if(get_kind($3) == LIT && $2 == 1)
-			code("-%s", get_name($3));
-		else
-			gen_sym_name($3);
+			//print_symtab();
 		
-		/*if(get_kind($3) == LIT)
-			gen_sym_name($3);
-		else if(get_kind($1) != LIT || get_kind($3) != LIT)
-			code("%s", get_name(get_atr1($3) - 1));*/
+			code(", ");
+			gen_sym_name($1);
+			code(", ");
+		
+			if(get_kind($3) == LIT && $2 == 1)
+				code("-%s", get_name($3));
+			else
+				gen_sym_name($3);
+		
+			/*if(get_kind($3) == LIT)
+				gen_sym_name($3);
+			else if(get_kind($1) != LIT || get_kind($3) != LIT)
+				code("%s", get_name(get_atr1($3) - 1));*/
 			
-        //free_if_reg($3);
-        //free_if_reg($1);
+			
+			//free_if_reg($3);
+			//free_if_reg($1);
+		}
 		
 		
 		
 		
 		 
-		  
 		  
         /*int t1 = get_type($1);    
         code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);

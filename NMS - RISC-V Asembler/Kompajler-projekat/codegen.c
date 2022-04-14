@@ -99,18 +99,27 @@ void gen_mov(int input_index, int output_index) {
 }
 
 void gen_mov_risc(int output_index, int input_index) {
-  if(get_kind(output_index) == REG){
+  if(get_kind(output_index) == REG && get_kind(input_index) == VAR){
 	code("\n\t\tmv\t\t");
 	gen_sym_name(output_index);
 	code(", %s", get_name(get_atr1(input_index) - 1));
 	//gen_sym_name(input_index);
   }
-  else if(get_kind(output_index) == VAR){
+  else if(get_kind(output_index) == VAR && get_kind(input_index) == REG){
 	code("\n\t\tmv\t\t%s", get_name(get_atr1(output_index) - 1));
 	//gen_sym_name(output_index);
 	//code(", %s", get_name(get_atr1(input_index) - 1));
 	code(", ");
 	gen_sym_name(input_index);
+  }
+  else if(get_kind(output_index) == REG && get_kind(input_index) == REG){
+	code("\n\t\tmv\t\t");
+	gen_sym_name(output_index);
+	//code(", %s", get_name(get_atr1(input_index) - 1));
+	code(", ");
+	gen_sym_name(input_index);
+	
+	return;
   }
   
   

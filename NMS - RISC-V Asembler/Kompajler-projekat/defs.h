@@ -12,6 +12,7 @@
 //#define FUN_REG               13
 #define LAST_WORKING_REG      18
 #define FUN_REG               22
+#define TMP_REG				  23
 #define CHAR_BUFFER_LENGTH   128
 extern char char_buffer[CHAR_BUFFER_LENGTH];
 

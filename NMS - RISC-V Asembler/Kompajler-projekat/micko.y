@@ -31,6 +31,9 @@
   
   int multiplication_num = -1;
   int division_num = -1;
+  
+  int mul_flag = 0;
+  int div_flag = 0;
 %}
 
 %union {
@@ -216,7 +219,7 @@ for_statement
 	}
   _SEMICOLON rel_exp
     {
-	  code("\n\t\t%s\t@exit_for%d", opp_jumps[$8], $<i>6);
+	  code("\n\t\t%s\t\t@exit_for%d", opp_jumps[$8], $<i>6);
 	}
   _SEMICOLON _ID _INC _RPAREN statement
     {
@@ -306,10 +309,14 @@ num_exp
 			code("\n\t\taddi\t");
 		else if(get_kind($3) == LIT && $2 == 2){
 			multiplication_num++;
+			//mul_flag = 1;
+			
+			code("\n");
+			gen_mov_risc(TMP_REG, $$);
 			
 			$$ = take_reg();
 			set_type($$, t1);
-			code("\n\n\t\tli\t\t");
+			code("\n\t\tli\t\t");
 			gen_sym_name($$);
 			code(", 0\n");
 			
@@ -326,17 +333,18 @@ num_exp
 			code(", %s\n", get_name($3));
 			
 			code("mul%d:\n", multiplication_num);
-			code("\t\tbeq\t\t");
+			/*code("\t\tbeq\t\t");
 			gen_sym_name($$);
 			code(", ");
 			gen_sym_name(reg2);
-			code(", mul%d_end\n", multiplication_num);
+			code(", mul%d_end\n", multiplication_num);*/
 			
 			code("\t\tadd\t\t");
 			gen_sym_name($$);
 			code(", ");
 			gen_sym_name($$);
-			code(", %s\n", get_name(get_atr1($1) - 1));
+			code(", %s\n", get_name(TMP_REG));
+
 			
 			code("\t\taddi\t");
 			gen_sym_name(reg1);
@@ -350,17 +358,21 @@ num_exp
 			gen_sym_name(reg2);
 			code(", mul%d\n", multiplication_num);
 			
-			code("mul%d_end:\n", multiplication_num);
+			code("mul%d_end:", multiplication_num);
 			
 			free_if_reg(reg2);
 			free_if_reg(reg1);
-			//print_symtab();
 		}
 		else if(get_kind($3) == LIT && $2 == 3){
 			division_num++;
+			//div_flag = 1;
+			
+			code("\n");
+			gen_mov_risc(TMP_REG, $$);
+			
 			$$ = take_reg();
 			set_type($$, t1);
-			code("\n\n\t\tli\t\t");
+			code("\n\t\tli\t\t");
 			gen_sym_name($$);
 			code(", 0\n");
 			
@@ -368,7 +380,7 @@ num_exp
 			code("\t\tmv\t\t");
 			gen_sym_name(reg1);
 			set_type(reg1, t1);
-			code(", %s\n", get_name(get_atr1($1) - 1));
+			code(", %s\n", get_name(TMP_REG));
 			
 			code("div%d:\n", division_num);
 			
@@ -389,7 +401,7 @@ num_exp
 			code(", 1\n");
 			
 			code("\t\tj\t\tdiv%d\n", division_num);
-			code("div%d_exit:\n", division_num);
+			code("div%d_exit:", division_num);
 			
 			free_if_reg(reg1);
 		}
@@ -402,6 +414,7 @@ num_exp
 		   (get_kind($3) != LIT && $2 == 2) || 
 		   (get_kind($3) == LIT && $2 == 0) || 
 		   (get_kind($3) == LIT && $2 == 1)){
+		   
 		
 			$$ = take_reg();
 			gen_sym_name($$);
@@ -423,9 +436,6 @@ num_exp
 			else if(get_kind($1) != LIT || get_kind($3) != LIT)
 				code("%s", get_name(get_atr1($3) - 1));*/
 			
-			
-			//free_if_reg($3);
-			//free_if_reg($1);
 		}
 		
 		
@@ -535,27 +545,28 @@ argument
 
 if_statement
   : if_part %prec ONLY_IF
-      { code("\n@exit_if%d:", $1); }
+      { code("\nif_exit%d:", $1); }
 
   | if_part _ELSE statement
-      { code("\n@exit_if%d:", $1); }
+      { code("\nif_exit%d:", $1); }
   ;
 
 if_part
   : _IF _LPAREN
       {
         $<i>$ = ++if_num;
-        code("\n@if%d:", if_num);
+        code("\nif%d:", if_num);
       }
     rel_exp
       {
-        code("\n\t\t%s\t@false_if%d", opp_jumps[$4], $<i>3);
-        code("\n@true_if%d:", $<i>3);
+        //code("\n\t\t%s\t\tif_false%d", opp_jumps[$4], $<i>3);
+		code("if_false%d", $<i>3);
+        code("\nif_true%d:", $<i>3);
       }
     _RPAREN statement
       {
-        code("\n\t\tJMP\t@exit_if%d", $<i>3);
-        code("\n@false_if%d:", $<i>3);
+        code("\n\t\tj\t\tif_exit%d", $<i>3);
+        code("\nif_false%d:", $<i>3);
         $$ = $<i>3;
       }
   ;
@@ -566,7 +577,14 @@ rel_exp
         if(get_type($1) != get_type($3))
           err("invalid operands: relational operator");
         $$ = $2 + ((get_type($1) - 1) * RELOP_NUMBER);
-        gen_cmp($1, $3);
+		
+		code("\n\t\t%s\t\t", opp_jumps[$$]);
+		gen_sym_name($1);
+		code(", ");
+		gen_sym_name($3);
+		code(", ");
+		
+        //gen_cmp($1, $3);
       }
   ;
 
@@ -583,9 +601,16 @@ return_statement
 		code("\t\tli\t\ta7, 4\n");
 		code("\t\tecall\n");
 
-		//printf("\nRET: %d\n", FUN_REG);
-		//printf("RET: %d\n", $2);
-		gen_mov_risc(FUN_REG, $2);
+		
+		if(get_kind($2) == LIT){
+			code("\n\t\tli\t\t");
+			gen_sym_name(FUN_REG);
+			code(", ");
+			gen_sym_name($2);
+		}
+		else
+			gen_mov_risc(FUN_REG, $2);
+		
 		code("\n\t\tli\t\ta7, 1\n");
 		code("\t\tecall\n");
 		

@@ -216,5 +216,8 @@ void init_symtab(void) {
   
   sprintf(s, "a0");
   insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
+  
+  sprintf(s, "a1");
+  insert_symbol(strdup(s), REG, NO_TYPE, NO_ATR, NO_ATR);
 }
 

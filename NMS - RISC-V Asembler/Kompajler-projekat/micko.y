@@ -32,8 +32,13 @@
   int multiplication_num = -1;
   int division_num = -1;
   
-  int mul_flag = 0;
-  int div_flag = 0;
+  int if_reg = -1;
+  int while_reg = -1;
+  int for_reg = -1;
+  
+  int if_flag = 0;
+  int while_flag = 0;
+  int for_flag = 0;
 %}
 
 %union {
@@ -206,6 +211,7 @@ for_statement
   : _FOR _LPAREN _ID _ASSIGN literal
     {
 	  $<i>$ = ++for_num;
+	  for_flag = 1;
 	  
 	  int i = lookup_symbol($3, VAR|PAR);
 	  if(i == NO_INDEX)
@@ -214,12 +220,22 @@ for_statement
 	  if(get_type(i) != get_type($5))
 	    err("incompatible types");
 		
-	  gen_mov($5, i);
-	  code("\n@for%d:", for_num);
+
+	  //gen_mov($5, i);
+	  
+	  
+	  code("\n\n\t\tli\t\t");
+	  gen_sym_name(i);
+	  code(", ");
+	  gen_sym_name($5);
+	  
+	  
+	  code("\nfor%d:", for_num);
 	}
   _SEMICOLON rel_exp
     {
-	  code("\n\t\t%s\t\t@exit_for%d", opp_jumps[$8], $<i>6);
+	  //code("\n\t\t%s\t\t@exit_for%d", opp_jumps[$8], $<i>6);
+	  code("for_exit%d", $<i>6);
 	}
   _SEMICOLON _ID _INC _RPAREN statement
     {
@@ -227,17 +243,22 @@ for_statement
 	  if(i == NO_INDEX)
 	    err("'%s' undeclared", $11);
 		
-	  if(get_type(i) == INT)
+	  /*if(get_type(i) == INT)
 	    code("\n\t\tADDS\t");
 	  else
-	    code("\n\t\tADDU\t");
+	    code("\n\t\tADDU\t");*/
+		
+	  code("\n\t\taddi\t");
 		
 	  gen_sym_name(i);
-	  code(",$1,");
+	  code(", ");
 	  gen_sym_name(i);
+	  code(", 1");
 	  
-	  code("\n\t\tJMP\t\t@for%d", $<i>6);
-	  code("\n@exit_for%d:", $<i>6);
+	  code("\n\t\tj\t\tfor%d", $<i>6);
+	  code("\nfor_exit%d:", $<i>6);
+	  
+	  free_if_reg(for_reg);
 	}
   ;
   
@@ -245,7 +266,7 @@ while_statement
   : _WHILE
     {
 	  $<i>$ = ++while_num;
-	  
+	  while_flag = 1;
 	  code("\nwhile%d:", while_num);
 	}
   _LPAREN rel_exp
@@ -257,6 +278,7 @@ while_statement
     {
 	  code("\n\t\tj\t\twhile%d", $<i>2);
 	  code("\nwhile_exit%d:", $<i>2);
+	  free_if_reg(while_reg);
 	}
   ;
 
@@ -546,16 +568,23 @@ argument
 
 if_statement
   : if_part %prec ONLY_IF
-      { code("\nif_exit%d:", $1); }
+      { code("\nif_exit%d:", $1);
+		free_if_reg(if_reg);
+	  }
 
   | if_part _ELSE statement
-      { code("\nif_exit%d:", $1); }
+      { code("\nif_exit%d:", $1);
+		free_if_reg(if_reg);
+	  }
   ;
 
 if_part
   : _IF _LPAREN
       {
         $<i>$ = ++if_num;
+		
+		//if_reg = take_reg();
+		if_flag = 1;
         code("\nif%d:", if_num);
       }
     rel_exp
@@ -579,10 +608,38 @@ rel_exp
           err("invalid operands: relational operator");
         $$ = $2 + ((get_type($1) - 1) * RELOP_NUMBER);
 		
+		if(get_kind($3) == LIT && if_flag == 1){
+			if_reg = take_reg();
+			code("\n\t\tli\t\t%s, %s", get_name(if_reg), get_name($3));
+		}
+		else if(get_kind($3) == LIT && while_flag == 1){
+			while_reg = take_reg();
+			code("\n\t\tli\t\t%s, %s", get_name(while_reg), get_name($3));
+		}
+		else if(get_kind($3) == LIT && for_flag == 1){
+			for_reg = take_reg();
+			code("\n\t\tli\t\t%s, %s", get_name(for_reg), get_name($3));
+		}
+		
+		
 		code("\n\t\t%s\t\t", opp_jumps[$$]);
 		gen_sym_name($1);
 		code(", ");
-		gen_sym_name($3);
+		if(get_kind($3) == LIT && if_flag == 1){
+			code("%s", get_name(if_reg));
+			if_flag = 0;
+		}
+		else if(get_kind($3) == LIT && for_flag == 1){
+			code("%s", get_name(for_reg));
+			for_flag = 0;
+		}
+		else if(get_kind($3) == LIT && while_flag == 1){
+			code("%s", get_name(while_reg));
+			while_flag = 0;
+		}
+		else
+			gen_sym_name($3);
+		
 		code(", ");
 		
         //gen_cmp($1, $3);

@@ -4,16 +4,21 @@
 int main(){
 	int i;
 	int j;
-	//int g;
+	int g;
 	//int k;
 	
 	i = 4;
-	j = 6;
+	j = i;
 	
-	if(i < j)
-		i = 2;
-	else
-		i = j + ((j * 5) / 2) - (j * 5);
+	//if(i < j)
+	//	i = 2;
+	//else
+	//	i = j + ((j * 5) / 2) - (j * 5);*/
+	
+	while(i == j){
+		g = i / 2;
+		i = i + 1;
+	}
 	
 	//g = 10;
 	//i = j + ((j * 5) / 2) - (j * 5);
@@ -25,5 +30,5 @@ int main(){
 	//g = g * j;
 	
 	
-	return i;
+	return g;
 }

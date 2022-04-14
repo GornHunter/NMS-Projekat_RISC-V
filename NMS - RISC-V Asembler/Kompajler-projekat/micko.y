@@ -246,16 +246,17 @@ while_statement
     {
 	  $<i>$ = ++while_num;
 	  
-	  code("\n@while%d:", while_num);
+	  code("\nwhile%d:", while_num);
 	}
   _LPAREN rel_exp
     {
-	  code("\n\t\t%s\t@exit_while%d", opp_jumps[$4], $<i>2);
+	  //code("\n\t\t%s\t@exit_while%d", opp_jumps[$4], $<i>2);
+	  code("while_exit%d", $<i>2);
 	}
   _RPAREN statement
     {
-	  code("\n\t\tJMP\t\t@while%d", $<i>2);
-	  code("\n@exit_while%d:", $<i>2);
+	  code("\n\t\tj\t\twhile%d", $<i>2);
+	  code("\nwhile_exit%d:", $<i>2);
 	}
   ;
 

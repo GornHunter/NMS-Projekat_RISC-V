@@ -293,8 +293,9 @@ assignment_statement
         if(idx == NO_INDEX)
           err("invalid lvalue '%s' in assignment", $1);
         else
-          if(get_type(idx) != get_type($3))
+          if(get_type(idx) != get_type($3)){
             err("incompatible types in assignment");
+		  }
 		
 		
 		if(get_kind($3) == LIT){
@@ -499,18 +500,43 @@ exp
     {
 	  int out = take_reg();
 	  ++ternary_num;
+	  
 	
 	  if(get_type($5) != get_type($7))
 	    err("expressions don't have same types in ternary exp");
 		
-	  code("\n\t\t%s\t@false_ternary%d", opp_jumps[$2], ternary_num);
-	  code("\n@true_ternary%d:", ternary_num);
-	  gen_mov($5, out);
+	  //code("\n\n\t\t%s\t@false_ternary%d", opp_jumps[$2], ternary_num);
+	  code("ternary_false%d", ternary_num);
+	  code("\nternary_true%d:", ternary_num);
 	  
-	  code("\n\t\tJMP\t\t@exit_ternary%d", ternary_num);
-	  code("\n@false_ternary%d:", ternary_num);
-	  gen_mov($7, out);
-	  code("\n@exit_ternary%d:", ternary_num);
+	  if(get_kind($5) == LIT){
+		code("\n\t\tli\t\t");
+		gen_sym_name(out);
+		code(", ");
+		gen_sym_name($5);
+	  }
+	  else
+		gen_mov_risc(out, $5);
+	  
+	  
+	  //gen_mov($5, out);
+	  
+	  
+	  code("\n\t\tj\t\tternary_exit%d", ternary_num);
+	  code("\nternary_false%d:", ternary_num);
+	  
+	  if(get_kind($7) == LIT){
+		code("\n\t\tli\t\t");
+		gen_sym_name(out);
+		code(", ");
+		gen_sym_name($7);
+	  }
+	  else
+		gen_mov_risc(out, $7);
+	  
+	  
+	  //gen_mov($7, out);
+	  code("\nternary_exit%d:", ternary_num);
 	  $$ = out;
 	}
   ;
@@ -622,7 +648,7 @@ rel_exp
 		}
 		
 		
-		code("\n\t\t%s\t\t", opp_jumps[$$]);
+		code("\n\n\t\t%s\t\t", opp_jumps[$$]);
 		gen_sym_name($1);
 		code(", ");
 		if(get_kind($3) == LIT && if_flag == 1){
@@ -654,10 +680,12 @@ return_statement
 		  
         //gen_mov($2, FUN_REG);
 		
-		
-		code("\n\n\t\tla\t\ta0, str1\n");
-		code("\t\tli\t\ta7, 4\n");
-		code("\t\tecall\n");
+		printf("\n%s\n", get_name(fun_idx));
+		if(get_name(fun_idx) == "main"){
+			code("\n\n\t\tla\t\ta0, str1\n");
+			code("\t\tli\t\ta7, 4\n");
+			code("\t\tecall\n");
+		}
 
 		
 		if(get_kind($2) == LIT){

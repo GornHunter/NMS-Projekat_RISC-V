@@ -15,24 +15,36 @@ int main(){
 	//else
 	//	i = i + 2;
 	
-	while(i == 4){
+	//while(i == 4){
 		//g = i / 2;
 		//g = g + j;
 		//i = i + 1;
 		
-		if(i > j){
-			g = i / 2;
-			g = g + j;
-		}
-		else
-			g = i * 2;
+	//	if(i > j){
+	//		g = i / 2;
+	//		g = g + j;
+	//	}
+	//	else
+	//		g = i * 2;
 		
-		i = i + 1;
-	}
+	//	i = i + 1;
+	//}
 	
 	//for(g = 0; g < 4; g++){
 	//	i = i * 3 / 2;
 	//}
+	
+	g = (i < j) ? 6 : j;
+	
+	if(i < 6)
+		i = g + 3;
+	else
+		g = 12;
+		
+	if(i > 6)
+		i = i + 3;
+	else
+		g = 12;
 	
 	//g = 10;
 	//i = j + ((j * 5) / 2) - (j * 5);
@@ -44,5 +56,5 @@ int main(){
 	//g = g * j;
 	
 	
-	return g;
+	return i;
 }

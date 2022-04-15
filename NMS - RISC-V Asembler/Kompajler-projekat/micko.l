@@ -16,6 +16,8 @@
 "else"               { return _ELSE; }
 "return"             { return _RETURN; }
 
+"include"			 { return _INCLUDE; }
+
 
 "for"				 { return _FOR; }
 "++"				 { return _INC; }

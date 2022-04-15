@@ -59,8 +59,12 @@ void gen_sym_name(int index) {
     if(get_kind(index) == VAR) // -n*4(%14)
       code("%s", get_name(get_atr1(index) - 1));
     else 
-      if(get_kind(index) == PAR) // m*4(%14)
-        code("%d(%%14)", 4 + get_atr1(index) *4);
+      if(get_kind(index) == PAR){ // m*4(%14)
+		code("a0");
+	  
+	  
+        //code("%d(%%14)", 4 + get_atr1(index) *4);
+	  }
       else
         if(get_kind(index) == LIT){
           code("%s", get_name(index));
@@ -121,6 +125,12 @@ void gen_mov_risc(int output_index, int input_index) {
 	//code(", %s", get_name(get_atr1(input_index) - 1));
 	code(", ");
 	gen_sym_name(input_index);
+	
+	if(output_index >= 0 && output_index <= LAST_WORKING_REG)
+		set_type(output_index, get_type(input_index));
+	
+	//if(strcmp(get_name(output_index), "a0") != 0 || strcmp(get_name(output_index), "a1") != 0)
+		//free_if_reg(input_index);
 	
 	return;
   }

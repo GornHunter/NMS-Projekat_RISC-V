@@ -1,6 +1,12 @@
 //OPIS: obican for
 //RETURN: 7
 
+int fun(int a){
+	//int b;
+	//b = a + 3;
+	return a + 1 + a;
+}
+
 int main(){
 	int i;
 	int j;
@@ -9,6 +15,9 @@ int main(){
 	
 	i = 4;
 	j = 5;
+	g = fun(i);
+	
+	g = g + i * 3 / 2;
 	
 	//if(i < j)
 	//	i = 2;
@@ -34,20 +43,20 @@ int main(){
 	//	i = i * 3 / 2;
 	//}
 	
-	g = (i < j) ? 6 : j;
+	//g = (i < j) ? 6 : 7;
 	
-	if(i < 6)
-		i = g + 3;
-	else
-		g = 12;
+	//if(i < 6)
+	//	i = g + 3;
+	//else
+	//	g = 12;
 		
-	if(i > 6)
-		i = i + 3;
-	else
-		g = 12;
+	//if(i > 6)
+	//	i = i + 3;
+	//else
+	//	g = 12;
 	
 	//g = 10;
-	//i = j + ((j * 5) / 2) - (j * 5);
+	//i = j + ((j * 5) / 2) - (j * 5) + i;
 	//i = j / 3 / 2 * 4;
 	//i = j * j + 5 / 3;
 	//k = 6;
@@ -56,5 +65,5 @@ int main(){
 	//g = g * j;
 	
 	
-	return i;
+	return g;
 }

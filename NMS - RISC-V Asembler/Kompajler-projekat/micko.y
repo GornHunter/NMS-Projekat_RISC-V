@@ -1,6 +1,7 @@
 %{
   #include <stdio.h>
   #include <stdlib.h>
+  #include <string.h>
   #include "defs.h"
   #include "symtab.h"
   #include "codegen.h"
@@ -29,6 +30,8 @@
   int while_num = -1;
   int ternary_num = -1;
   
+  int main_reg = -1;
+  
   int multiplication_num = -1;
   int division_num = -1;
   
@@ -39,6 +42,8 @@
   int if_flag = 0;
   int while_flag = 0;
   int for_flag = 0;
+  
+  int fun_flag = 0;
 %}
 
 %union {
@@ -61,6 +66,8 @@
 %token _SEMICOLON
 %token <i> _AROP
 %token <i> _RELOP
+
+%token _INCLUDE
 
 %token _FOR
 %token _INC
@@ -92,17 +99,23 @@ function_list
 function
   : _TYPE _ID
       {
-        fun_idx = lookup_symbol($2, FUN);
-        if(fun_idx == NO_INDEX)
-          fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
-        else 
-          err("redefinition of function '%s'", $2);
-
-
-		code(".data\n");
-		code("str1:\t.string \"Result is \"\n\n");
-		code(".text\n");
-        code("%s:", $2);
+		if(strcmp(get_name(fun_idx), "main") != 0){
+			fun_idx = lookup_symbol($2, FUN);
+			if(fun_idx == NO_INDEX)
+				fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
+			else 
+				err("redefinition of function '%s'", $2);
+		
+			if(strcmp(get_name(fun_idx), "main") != 0)
+				fun_flag++;
+		
+			if(strcmp(get_name(fun_idx), "main") == 0){
+				code("\n.data\n");
+				code("str1:\t.string \"Result is \"\n\n");
+				code(".text\n");
+			}
+		}
+		code("\n%s:", $2);
 		
 		
 		
@@ -111,7 +124,10 @@ function
       }
     _LPAREN parameter _RPAREN body
       {
-		code("\n%s_exit:", $2);
+		if(strcmp(get_name(fun_idx), "main") == 0)
+			code("\n%s_exit:", $2);
+		else
+			code("\n%s_exit:\n", $2);
 		
 		if(var_num){
 			int tmp1 = var_num;
@@ -119,14 +135,20 @@ function
 				tmp1 -= 1;
 				code("\n\t\tlw\t\t%s, %d(sp)", get_name(tmp1), tmp);
 				tmp += 4;
-				free_if_reg(tmp1);
+				//if(strcmp(get_name(fun_idx), "main") != 0)
+					//free_if_reg(tmp1);
 			}
 		
 			code("\n\t\taddi\tsp, sp, %d\n", 4 * var_num);
 		}
 		
-		code("\n\t\tli a7, 10");
-		code("\n\t\tecall");
+		if(strcmp(get_name(fun_idx), "main") != 0)
+			code("\t\tret\n");
+		
+		if(strcmp(get_name(fun_idx), "main") == 0){
+			code("\n\t\tli a7, 10");
+			code("\n\t\tecall");
+		}
 		
 		
         clear_symbols(fun_idx + 1);
@@ -139,6 +161,9 @@ function
         //code("\n\t\tRET");
       }
   ;
+
+
+  
 
 parameter
   : /* empty */
@@ -161,6 +186,7 @@ body
 		  tmp = var_num;
 		  for(int i = 0;i < var_num;i++){
 			int reg = take_reg();
+			//main_reg = take_reg();
 			//set_type(reg, get_type($2));
 			
 			code("\n\t\tsw\t\t");
@@ -189,7 +215,6 @@ variable
            insert_symbol($2, VAR, $1, ++var_num, NO_ATR);
         else 
            err("redefinition of '%s'", $2);
-		   
       }
   ;
 
@@ -299,7 +324,7 @@ assignment_statement
 		
 		
 		if(get_kind($3) == LIT){
-		  //code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - 1));
+		  //code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - fun_flag));
 		  code("\n\t\tli\t\t");
 		  gen_sym_name(idx);
 		  code(", ");
@@ -463,21 +488,6 @@ num_exp
 		}
 		
 		
-		
-		
-		 
-		  
-        /*int t1 = get_type($1);    
-        code("\n\t\t%s\t\t", ar_instructions[$2 + (t1 - 1) * AROP_NUMBER]);
-        gen_sym_name($1);
-        code(", ");
-        gen_sym_name($3);
-        code(", ");
-        free_if_reg($3);
-        free_if_reg($1);
-        $$ = take_reg();
-        gen_sym_name($$);
-        set_type($$, t1);*/
       }
   ;
 
@@ -492,7 +502,9 @@ exp
   | function_call
       {
         $$ = take_reg();
-        gen_mov(FUN_REG, $$);
+		gen_mov_risc($$, FUN_REG);
+		
+        //gen_mov(FUN_REG, $$);
       }
   | _LPAREN num_exp _RPAREN
       { $$ = $2; }
@@ -569,9 +581,10 @@ function_call
       {
         if(get_atr1(fcall_idx) != $4)
           err("wrong number of arguments");
-        code("\n\t\tCALL\t%s", get_name(fcall_idx));
+        //code("\n\t\tCALL\t%s", get_name(fcall_idx));
+		code("\n\t\tjal\t\t%s", get_name(fcall_idx));
         if($4 > 0)
-          code("\n\t\tADDS\t%%15,$%d,%%15", $4 * 4);
+          //code("\n\t\tADDS\t%%15,$%d,%%15", $4 * 4);
         set_type(FUN_REG, get_type(fcall_idx));
         $$ = FUN_REG;
       }
@@ -586,8 +599,14 @@ argument
       if(get_atr2(fcall_idx) != get_type($1))
         err("incompatible type for argument");
       free_if_reg($1);
-      code("\n\t\tPUSH\t");
-      gen_sym_name($1);
+	  
+	  
+      //code("\n\t\tPUSH\t");
+	  //gen_sym_name($1);
+	  
+	  
+	  gen_mov_risc(FUN_REG, $1);
+   
       $$ = 1;
     }
   ;
@@ -680,27 +699,31 @@ return_statement
 		  
         //gen_mov($2, FUN_REG);
 		
-		printf("\n%s\n", get_name(fun_idx));
-		if(get_name(fun_idx) == "main"){
-			code("\n\n\t\tla\t\ta0, str1\n");
+
+		if(strcmp(get_name(fun_idx), "main") == 0){
+			code("\n\n\t\tla\t\t%s, str1\n", get_name(FUN_REG));
 			code("\t\tli\t\ta7, 4\n");
-			code("\t\tecall\n");
+			code("\t\tecall");
 		}
 
 		
 		if(get_kind($2) == LIT){
-			code("\n\t\tli\t\t");
+			code("\n\n\t\tli\t\t");
 			gen_sym_name(FUN_REG);
 			code(", ");
 			gen_sym_name($2);
 		}
-		else
+		else{
+			code("\n");
 			gen_mov_risc(FUN_REG, $2);
+		}
 		
-		code("\n\t\tli\t\ta7, 1\n");
-		code("\t\tecall\n");
+		if(strcmp(get_name(fun_idx), "main") == 0){
+			code("\n\t\tli\t\ta7, 1\n");
+			code("\t\tecall\n");
+		}
 		
-        code("\n\t\tj\t\t%s_exit", get_name(fun_idx));        
+		code("\n\t\tj\t\t%s_exit", get_name(fun_idx));
       }
   ;
 
@@ -721,6 +744,8 @@ int main() {
   int synerr;
   init_symtab();
   output = fopen("output.asm", "w+");
+  
+  //print_symtab();
 
   synerr = yyparse();
 

@@ -18,7 +18,6 @@
   int warning_count = 0;
   
   int var_num = 0;
-  int tmp = 0;
   
   int fun_idx = -1;
   int fcall_idx = -1;
@@ -30,8 +29,6 @@
   int while_num = -1;
   int ternary_num = -1;
   
-  int main_reg = -1;
-  
   int multiplication_num = -1;
   int division_num = -1;
   
@@ -42,8 +39,6 @@
   int if_flag = 0;
   int while_flag = 0;
   int for_flag = 0;
-  
-  int fun_flag = 0;
 %}
 
 %union {
@@ -99,22 +94,20 @@ function_list
 function
   : _TYPE _ID
       {
-		if(strcmp(get_name(fun_idx), "main") != 0){
-			fun_idx = lookup_symbol($2, FUN);
-			if(fun_idx == NO_INDEX)
-				fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
-			else 
-				err("redefinition of function '%s'", $2);
+		fun_idx = lookup_symbol($2, FUN);
+		if(fun_idx == NO_INDEX)
+			fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
+		else 
+			err("redefinition of function '%s'", $2);
 		
-			if(strcmp(get_name(fun_idx), "main") != 0)
-				fun_flag++;
 		
-			if(strcmp(get_name(fun_idx), "main") == 0){
-				code("\n.data\n");
-				code("str1:\t.string \"Result is \"\n\n");
-				code(".text\n");
-			}
+		if(strcmp(get_name(fun_idx), "main") == 0){
+			code("\n.data\n");
+			code("str1:\t.string \"Result is \"\n");
+			code("arr:\t.word 100\n\n");
+			code(".text\n");
 		}
+		
 		code("\n%s:", $2);
 		
 		
@@ -130,13 +123,12 @@ function
 			code("\n%s_exit:\n", $2);
 		
 		if(var_num){
-			int tmp1 = var_num;
-			for(int i = 0;i < var_num;i++){
-				tmp1 -= 1;
-				code("\n\t\tlw\t\t%s, %d(sp)", get_name(tmp1), tmp);
+			int tmp = 0;
+			
+			for(int i = var_num;i > 0;i--){
+				code("\n\t\tlw\t\t%s, %d(sp)", get_name(i - 1), tmp);
 				tmp += 4;
-				//if(strcmp(get_name(fun_idx), "main") != 0)
-					//free_if_reg(tmp1);
+				free_if_reg(i - 1);
 			}
 		
 			code("\n\t\taddi\tsp, sp, %d\n", 4 * var_num);
@@ -183,7 +175,7 @@ body
         if(var_num){
 		  code("\n\t\taddi\tsp, sp, -%d", 4 * var_num);
 		  
-		  tmp = var_num;
+		  int tmp = var_num;
 		  for(int i = 0;i < var_num;i++){
 			int reg = take_reg();
 			//main_reg = take_reg();
@@ -194,6 +186,10 @@ body
 			code(", %d(sp)", (4 * tmp) - 4);
 			tmp -= 1;
 		  }
+		  
+		  if(strcmp(get_name(fun_idx), "main") == 0)
+			code("\n\t\tla\t\ta2, arr");
+		  
 		  
           //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
 		}
@@ -361,7 +357,14 @@ num_exp
 			//mul_flag = 1;
 			
 			code("\n");
-			gen_mov_risc(TMP_REG, $$);
+			if(get_kind($1) == PAR){
+				code("\n\t\tmv\t\t");
+				gen_sym_name(TMP_REG);
+				code(", ");
+				gen_sym_name($$);
+			}
+			else
+				gen_mov_risc(TMP_REG, $$);
 			
 			$$ = take_reg();
 			set_type($$, t1);
@@ -417,7 +420,14 @@ num_exp
 			//div_flag = 1;
 			
 			code("\n");
-			gen_mov_risc(TMP_REG, $$);
+			if(get_kind($1) == PAR){
+				code("\n\t\tmv\t\t");
+				gen_sym_name(TMP_REG);
+				code(", ");
+				gen_sym_name($$);
+			}
+			else
+				gen_mov_risc(TMP_REG, $$);
 			
 			$$ = take_reg();
 			set_type($$, t1);
@@ -582,8 +592,32 @@ function_call
         if(get_atr1(fcall_idx) != $4)
           err("wrong number of arguments");
         //code("\n\t\tCALL\t%s", get_name(fcall_idx));
+		
+		if(var_num){
+		  int tmp = var_num;
+		  code("\n");
+		  for(int i = 0;i < var_num;i++){
+			code("\n\t\tsw\t\t");
+			gen_sym_name(i);
+			code(", %d(a2)", (4 * tmp) - 4);
+			tmp -= 1;
+		  }
+		  code("\n");
+		}
+		
 		code("\n\t\tjal\t\t%s", get_name(fcall_idx));
-        if($4 > 0)
+		
+		if(var_num){
+		  int tmp = 0;
+		  code("\n");
+		  for(int i = var_num;i > 0;i--){
+			code("\n\t\tlw\t\t%s, %d(a2)", get_name(i - 1), tmp);
+			tmp += 4;
+		  }
+		  code("\n");
+		}
+		
+        //if($4 > 0)
           //code("\n\t\tADDS\t%%15,$%d,%%15", $4 * 4);
         set_type(FUN_REG, get_type(fcall_idx));
         $$ = FUN_REG;

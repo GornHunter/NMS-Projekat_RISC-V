@@ -2,9 +2,18 @@
 //RETURN: 7
 
 int fun(int a){
-	//int b;
-	//b = a + 3;
-	return a + 1 + a;
+	int b;
+	int c;
+	//int k;
+	b = 3;
+	//a = b + 2;
+	//a = 2;
+	b = b + (a * 3) / 3;
+	return b;
+}
+
+int fun1(int a){
+	return a - 7;
 }
 
 int main(){
@@ -15,14 +24,17 @@ int main(){
 	
 	i = 4;
 	j = 5;
-	g = fun(i);
+	i = fun(j); //6
+	g = fun1(i) + i; //5
 	
-	g = g + i * 3 / 2;
+	//g = i * 3;
 	
-	//if(i < j)
-	//	i = 2;
-	//else
-	//	i = i + 2;
+	g = g + i * 3 / 2; //16
+	
+	if(i < j)
+		i = 2;
+	else
+		g = g + 2;
 	
 	//while(i == 4){
 		//g = i / 2;

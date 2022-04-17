@@ -39,6 +39,8 @@
   int if_flag = 0;
   int while_flag = 0;
   int for_flag = 0;
+  
+  int fun_call_flag = 0;
 %}
 
 %union {
@@ -108,6 +110,7 @@ function
 			code(".text\n");
 		}
 		
+		
 		code("\n%s:", $2);
 		
 		
@@ -145,6 +148,7 @@ function
 		
         clear_symbols(fun_idx + 1);
         var_num = 0;
+		fun_call_flag = 0;
         
 		
 		
@@ -172,14 +176,18 @@ parameter
 body
   : _LBRACKET variable_list
       {
-        if(var_num){
+        if(var_num){  
 		  code("\n\t\taddi\tsp, sp, -%d", 4 * var_num);
 		  
 		  int tmp = var_num;
+		  int reg;
 		  for(int i = 0;i < var_num;i++){
-			int reg = take_reg();
-			//main_reg = take_reg();
-			//set_type(reg, get_type($2));
+			if((reg = take_reg()) != i && i == 0){
+				free_if_reg(reg);
+				free_if_reg(0);
+				reg = take_reg();
+			}
+			
 			
 			code("\n\t\tsw\t\t");
 			gen_sym_name(reg);
@@ -478,9 +486,8 @@ num_exp
 			$$ = take_reg();
 			gen_sym_name($$);
 			set_type($$, t1);
-		
-			//print_symtab();
-		
+
+
 			code(", ");
 			gen_sym_name($1);
 			code(", ");
@@ -536,6 +543,7 @@ exp
 		gen_sym_name(out);
 		code(", ");
 		gen_sym_name($5);
+		set_type(out, get_type($5));
 	  }
 	  else
 		gen_mov_risc(out, $5);
@@ -552,6 +560,7 @@ exp
 		gen_sym_name(out);
 		code(", ");
 		gen_sym_name($7);
+		set_type(out, get_type($7));
 	  }
 	  else
 		gen_mov_risc(out, $7);
@@ -778,8 +787,6 @@ int main() {
   int synerr;
   init_symtab();
   output = fopen("output.asm", "w+");
-  
-  //print_symtab();
 
   synerr = yyparse();
 

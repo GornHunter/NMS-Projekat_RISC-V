@@ -1,46 +1,62 @@
 //OPIS: obican for
-//RETURN: 7
+//RETURN: 128
 
 int fun(int a){
 	int b;
 	int c;
-	//int k;
+	
 	b = 3;
-	//a = b + 2;
-	//a = 2;
-	b = b + (a * 3) / 3;
+	a = a * 2 / 3; //3
+	b = b + ((a * 3) / 3) + (a + 4) * 2; // 26
 	return b;
 }
 
 int fun1(int a){
-	return a - 7;
+	int b;
+	b = 3;
+	return a * 6 / b; //52
+}
+
+int fun2(){
+	return 11;
 }
 
 int main(){
 	int i;
 	int j;
 	int g;
-	//int k;
+	int k;
+	int h;
 	
 	i = 4;
 	j = 5;
-	i = fun(j); //6
-	g = fun1(i) + i; //5
+	i = fun(j); //26
+	g = fun1(i) + i; //78
 	
 	//g = i * 3;
 	
-	g = g + i * 3 / 2; //16
+	g = g + i * 3 / 2; //156
 	
 	if(i < j)
 		i = 2;
-	else
-		g = g + 2;
+	else{
+		if(g != 0)
+			g = g + 2; //158
+		else{
+			g = 4;
+		}
+	}
 	
-	//while(i == 4){
-		//g = i / 2;
-		//g = g + j;
-		//i = i + 1;
-		
+	while(i < 28){
+		while(j > 3){
+			g = i / 2; //13
+			g = g + j; //18
+			j = j - 1;
+		}
+		g = g * 3; //153
+		i = i + 1;
+	}
+	
 	//	if(i > j){
 	//		g = i / 2;
 	//		g = g + j;
@@ -51,11 +67,16 @@ int main(){
 	//	i = i + 1;
 	//}
 	
-	//for(g = 0; g < 4; g++){
-	//	i = i * 3 / 2;
-	//}
+	for(k = 0; k < 4; k++){
+		for(h = 0; h < 3; h++){
+			g = g - 3; //117
+		}
+	}
 	
-	//g = (i < j) ? 6 : 7;
+	
+	g = (i > j) ? g : 4; //117
+	
+	g = g + fun2(); //128
 	
 	//if(i < 6)
 	//	i = g + 3;

@@ -20,7 +20,8 @@ int take_reg(void) {
 }
 
 void free_reg(void) {
-   if(free_reg_num < 1) {
+   //if(free_reg_num < 1)
+   if(free_reg_num < 0) {
       err("Compiler error! No more registers to free!");
       exit(EXIT_FAILURE);
    }
@@ -107,40 +108,46 @@ void gen_mov_risc(int output_index, int input_index) {
 	code("\n\t\tmv\t\t");
 	gen_sym_name(output_index);
 	code(", %s", get_name(get_atr1(input_index) - 1));
-	//gen_sym_name(input_index);
+	
+	if(output_index >= 0 && output_index <= LAST_WORKING_REG)
+		set_type(output_index, get_type(input_index));
+	
+	return;
   }
   else if(get_kind(output_index) == VAR && get_kind(input_index) == REG){
 	code("\n\t\tmv\t\t%s", get_name(get_atr1(output_index) - 1));
-	//gen_sym_name(output_index);
-	//code(", %s", get_name(get_atr1(input_index) - 1));
 	code(", ");
 	gen_sym_name(input_index);
   }
   else if(get_kind(output_index) == VAR && get_kind(input_index) == VAR){
 	code("\n\t\tmv\t\t%s, %s", get_name(get_atr1(output_index) - 1), get_name(get_atr1(input_index) - 1));
+	return;
   }
   else if(get_kind(output_index) == VAR && get_kind(input_index) == PAR){
 	code("\n\t\tmv\t\t%s, %s", get_name(get_atr1(output_index) - 1), get_name(FUN_REG));
+	return;
   }
   else if(get_kind(output_index) == PAR && get_kind(input_index) == VAR){
 	code("\n\t\tmv\t\t%s, %s", get_name(FUN_REG), get_name(get_atr1(output_index) - 1));
+	return;
   }
   else if(get_kind(output_index) == PAR && get_kind(input_index) == REG){
 	code("\n\t\tmv\t\t%s, ", get_name(FUN_REG));
 	gen_sym_name(input_index);
+	//return;
+  }
+  else if(get_kind(output_index) == REG && get_kind(input_index) == PAR){
+	  
+	return;
   }
   else if(get_kind(output_index) == REG && get_kind(input_index) == REG){
 	code("\n\t\tmv\t\t");
 	gen_sym_name(output_index);
-	//code(", %s", get_name(get_atr1(input_index) - 1));
 	code(", ");
 	gen_sym_name(input_index);
 	
 	if(output_index >= 0 && output_index <= LAST_WORKING_REG)
 		set_type(output_index, get_type(input_index));
-	
-	//if(strcmp(get_name(output_index), "a0") != 0 || strcmp(get_name(output_index), "a1") != 0)
-		//free_if_reg(input_index);
 	
 	return;
   }

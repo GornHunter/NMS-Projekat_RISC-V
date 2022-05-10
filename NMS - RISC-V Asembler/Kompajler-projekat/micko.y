@@ -41,6 +41,10 @@
   int for_flag = 0;
   
   int fun_call_flag = 0;
+  
+  
+  int* parameter_map[128];
+  int arg_counter = 0;
 %}
 
 %union {
@@ -71,6 +75,7 @@
 %token _WHILE
 %token _QMARK
 %token _COLON
+%token _COMMA
 
 %type <i> num_exp exp literal
 %type <i> function_call argument rel_exp if_part cond_exp
@@ -97,8 +102,13 @@ function
   : _TYPE _ID
       {
 		fun_idx = lookup_symbol($2, FUN);
-		if(fun_idx == NO_INDEX)
+		if(fun_idx == NO_INDEX){
+			int* param_types = (int*) malloc(sizeof(int)*128);
+
 			fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
+			
+			parameter_map[fun_idx] = param_types;
+		}
 		else 
 			err("redefinition of function '%s'", $2);
 		
@@ -118,7 +128,7 @@ function
         //code("\n\t\tPUSH\t%%14");
         //code("\n\t\tMOV \t%%15,%%14");
       }
-    _LPAREN parameter _RPAREN body
+    _LPAREN parameter_list _RPAREN body
       {
 		if(strcmp(get_name(fun_idx), "main") == 0)
 			code("\n%s_exit:", $2);
@@ -158,18 +168,35 @@ function
       }
   ;
 
-
+parameter_list
+  : /* empty */
+      { set_atr1(fun_idx, 0); }
+  | parameters
+  ;
+  
+parameters
+  : parameter
+  | parameters _COMMA parameter
+  ;
   
 
 parameter
-  : /* empty */
-      { set_atr1(fun_idx, 0); }
-
-  | _TYPE _ID
+  : _TYPE _ID
       {
+		if(lookup_symbol($2, PAR) != -1){
+			err("Redefinition of parameter %s ", $2);
+		}
+
         insert_symbol($2, PAR, $1, 1, NO_ATR);
-        set_atr1(fun_idx, 1);
-        set_atr2(fun_idx, $1);
+		
+		int num_params = get_atr1(fun_idx);
+		int* param_types = parameter_map[fun_idx];
+		param_types[num_params] = $1;
+		num_params += 1;
+
+		set_atr1(fun_idx, num_params);
+        //set_atr1(fun_idx, 1);
+        //set_atr2(fun_idx, $1);
       }
   ;
 
@@ -196,7 +223,7 @@ body
 		  }
 		  
 		  if(strcmp(get_name(fun_idx), "main") == 0)
-			code("\n\t\tla\t\ta2, arr");
+			code("\n\t\tla\t\t%s, arr", get_name(HELP_REG));
 		  
 		  
           //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
@@ -323,6 +350,7 @@ assignment_statement
           err("invalid lvalue '%s' in assignment", $1);
         else
           if(get_type(idx) != get_type($3)){
+			printf("\nidx: %d, num_exp: %d\n", get_type(idx), get_type($3));
             err("incompatible types in assignment");
 		  }
 		
@@ -363,6 +391,7 @@ num_exp
 		else if(get_kind($3) == LIT && $2 == 2){
 			multiplication_num++;
 			//mul_flag = 1;
+			
 			
 			code("\n");
 			if(get_kind($1) == PAR){
@@ -595,12 +624,13 @@ function_call
         fcall_idx = lookup_symbol($1, FUN);
         if(fcall_idx == NO_INDEX)
           err("'%s' is not a function", $1);
+		  
+		arg_counter = 0;
       }
-    _LPAREN argument _RPAREN
+    _LPAREN argument_list _RPAREN
       {
-        if(get_atr1(fcall_idx) != $4)
-          err("wrong number of arguments");
-        //code("\n\t\tCALL\t%s", get_name(fcall_idx));
+        if(get_atr1(fcall_idx) != arg_counter)
+          err("wrong number of arguments to function '%s'", get_name(fcall_idx));
 		
 		if(var_num){
 		  int tmp = var_num;
@@ -608,7 +638,7 @@ function_call
 		  for(int i = 0;i < var_num;i++){
 			code("\n\t\tsw\t\t");
 			gen_sym_name(i);
-			code(", %d(a2)", (4 * tmp) - 4);
+			code(", %d(%s)", (4 * tmp) - 4, get_name(HELP_REG));
 			tmp -= 1;
 		  }
 		  code("\n");
@@ -620,7 +650,7 @@ function_call
 		  int tmp = 0;
 		  code("\n");
 		  for(int i = var_num;i > 0;i--){
-			code("\n\t\tlw\t\t%s, %d(a2)", get_name(i - 1), tmp);
+			code("\n\t\tlw\t\t%s, %d(%s)", get_name(i - 1), tmp, get_name(HELP_REG));
 			tmp += 4;
 		  }
 		  code("\n");
@@ -630,27 +660,48 @@ function_call
           //code("\n\t\tADDS\t%%15,$%d,%%15", $4 * 4);
         set_type(FUN_REG, get_type(fcall_idx));
         $$ = FUN_REG;
+		
+		arg_counter = 0;
       }
+  ;
+  
+argument_list
+  : /* empty */
+  | arguments
+  ;
+
+arguments
+  : argument
+  | arguments _COMMA argument
   ;
 
 argument
-  : /* empty */
-    { $$ = 0; }
-
-  | num_exp
+  : num_exp
     { 
-      if(get_atr2(fcall_idx) != get_type($1))
-        err("incompatible type for argument");
+      //if(get_atr2(fcall_idx) != get_type($1))
+        //err("incompatible type for argument");
+		
+	  if(parameter_map[fcall_idx][arg_counter] != get_type($1))
+		err("incompatible type for argument in '%s'", get_name(fcall_idx));
       free_if_reg($1);
 	  
 	  
-      //code("\n\t\tPUSH\t");
-	  //gen_sym_name($1);
+	  if(get_kind($1) == VAR)
+		gen_mov_risc(FUN_REG + arg_counter, $1);
+	  if(get_kind($1) == LIT){
+		code("\n\t\tli\t\t");
+		gen_sym_name(FUN_REG + arg_counter);
+		code(", ");
+		gen_sym_name($1);
+	  }
 	  
-	  
-	  gen_mov_risc(FUN_REG, $1);
    
-      $$ = 1;
+      //$$ = 1;
+	  arg_counter += 1;
+	  
+	  //slucaj gde se sme koristiti samo jedan parametar u funkciji, dodati iznad num_exp
+	  //: /* empty */
+		//{ $$ = 0; }
     }
   ;
 

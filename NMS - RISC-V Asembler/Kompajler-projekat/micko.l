@@ -25,6 +25,8 @@
 "?"					 { return _QMARK; }
 ":"					 { return _COLON; }
 
+","					 { return _COMMA; }
+
 
 "("                  { return _LPAREN; }
 ")"                  { return _RPAREN; } 

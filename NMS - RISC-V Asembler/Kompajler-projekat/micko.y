@@ -40,11 +40,11 @@
   int while_flag = 0;
   int for_flag = 0;
   
-  int fun_call_flag = 0;
   
   
   int* parameter_map[128];
   int arg_counter = 0;
+  int par_num = 0;
 %}
 
 %union {
@@ -122,11 +122,6 @@ function
 		
 		
 		code("\n%s:", $2);
-		
-		
-		
-        //code("\n\t\tPUSH\t%%14");
-        //code("\n\t\tMOV \t%%15,%%14");
       }
     _LPAREN parameter_list _RPAREN body
       {
@@ -158,13 +153,6 @@ function
 		
         clear_symbols(fun_idx + 1);
         var_num = 0;
-		fun_call_flag = 0;
-        
-		
-		
-        //code("\n\t\tMOV \t%%14,%%15");
-        //code("\n\t\tPOP \t%%14");
-        //code("\n\t\tRET");
       }
   ;
 
@@ -187,7 +175,7 @@ parameter
 			err("Redefinition of parameter %s ", $2);
 		}
 
-        insert_symbol($2, PAR, $1, 1, NO_ATR);
+        insert_symbol($2, PAR, $1, 1, par_num++);
 		
 		int num_params = get_atr1(fun_idx);
 		int* param_types = parameter_map[fun_idx];
@@ -195,6 +183,7 @@ parameter
 		num_params += 1;
 
 		set_atr1(fun_idx, num_params);
+		
         //set_atr1(fun_idx, 1);
         //set_atr2(fun_idx, $1);
       }
@@ -203,18 +192,21 @@ parameter
 body
   : _LBRACKET variable_list
       {
+		par_num = 0;
         if(var_num){  
 		  code("\n\t\taddi\tsp, sp, -%d", 4 * var_num);
 		  
+		  
+		  
 		  int tmp = var_num;
-		  int reg;
+		  int reg = take_reg();
+		  
+		  for(int i = reg;i >= 0;i--){
+			free_if_reg(i);
+		  }
+		  
 		  for(int i = 0;i < var_num;i++){
-			if((reg = take_reg()) != i && i == 0){
-				free_if_reg(reg);
-				free_if_reg(0);
-				reg = take_reg();
-			}
-			
+			reg = take_reg();
 			
 			code("\n\t\tsw\t\t");
 			gen_sym_name(reg);
@@ -222,11 +214,36 @@ body
 			tmp -= 1;
 		  }
 		  
+		  /*for(int i = 0;i < var_num;i++){
+			if((reg = take_reg()) != i && i == 0){
+				free_if_reg(reg);
+				free_if_reg(0);
+				reg = take_reg();
+			}
+
+			
+			code("\n\t\tsw\t\t");
+			gen_sym_name(reg);
+			code(", %d(sp)", (4 * tmp) - 4);
+			tmp -= 1;
+		  }*/
+		  
 		  if(strcmp(get_name(fun_idx), "main") == 0)
 			code("\n\t\tla\t\t%s, arr", get_name(HELP_REG));
-		  
-		  
-          //code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
+		}
+		else{
+			int reg = take_reg();
+			
+			for(int i = reg;i >=0;i--){
+				free_if_reg(i);
+			}
+			
+			/*if(reg > 0){
+				free_if_reg(reg);
+				free_if_reg(0);
+			}
+			else
+				free_if_reg(reg);*/
 		}
 		
         code("\n%s_body:", get_name(fun_idx));
@@ -350,7 +367,6 @@ assignment_statement
           err("invalid lvalue '%s' in assignment", $1);
         else
           if(get_type(idx) != get_type($3)){
-			printf("\nidx: %d, num_exp: %d\n", get_type(idx), get_type($3));
             err("incompatible types in assignment");
 		  }
 		
@@ -358,6 +374,18 @@ assignment_statement
 		if(get_kind($3) == LIT){
 		  //code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - fun_flag));
 		  code("\n\t\tli\t\t");
+		  gen_sym_name(idx);
+		  code(", ");
+		  gen_sym_name($3);
+		}
+		else if(get_kind($3) == PAR){
+		  code("\n\t\tmv\t\t");
+		  gen_sym_name(idx);
+		  code(", ");
+		  gen_sym_name($3);
+		}
+		else if(get_kind(idx) == PAR){
+		  code("\n\t\tmv\t\t");
 		  gen_sym_name(idx);
 		  code(", ");
 		  gen_sym_name($3);
@@ -525,15 +553,9 @@ num_exp
 				code("-%s", get_name($3));
 			else
 				gen_sym_name($3);
-		
-			/*if(get_kind($3) == LIT)
-				gen_sym_name($3);
-			else if(get_kind($1) != LIT || get_kind($3) != LIT)
-				code("%s", get_name(get_atr1($3) - 1));*/
-			
+				
+			print_symtab();
 		}
-		
-		
       }
   ;
 
@@ -780,8 +802,6 @@ rel_exp
 			gen_sym_name($3);
 		
 		code(", ");
-		
-        //gen_cmp($1, $3);
       }
   ;
 
@@ -791,7 +811,6 @@ return_statement
         if(get_type(fun_idx) != get_type($2))
           err("incompatible types in return");
 		  
-        //gen_mov($2, FUN_REG);
 		
 
 		if(strcmp(get_name(fun_idx), "main") == 0){
@@ -803,6 +822,13 @@ return_statement
 		
 		if(get_kind($2) == LIT){
 			code("\n\n\t\tli\t\t");
+			gen_sym_name(FUN_REG);
+			code(", ");
+			gen_sym_name($2);
+		}
+		else if(get_kind($2) == PAR && get_atr2($2) != 0){
+			code("\n");
+			code("\n\t\tmv\t\t");
 			gen_sym_name(FUN_REG);
 			code(", ");
 			gen_sym_name($2);

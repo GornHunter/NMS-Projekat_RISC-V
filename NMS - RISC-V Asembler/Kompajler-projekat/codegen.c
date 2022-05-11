@@ -61,7 +61,7 @@ void gen_sym_name(int index) {
       code("%s", get_name(get_atr1(index) - 1));
     else 
       if(get_kind(index) == PAR){ // m*4(%14)
-		code("a0");
+		code("a%d", get_atr2(index));
 	  
 	  
         //code("%d(%%14)", 4 + get_atr1(index) *4);
@@ -137,7 +137,7 @@ void gen_mov_risc(int output_index, int input_index) {
 	//return;
   }
   else if(get_kind(output_index) == REG && get_kind(input_index) == PAR){
-	  
+	
 	return;
   }
   else if(get_kind(output_index) == REG && get_kind(input_index) == REG){

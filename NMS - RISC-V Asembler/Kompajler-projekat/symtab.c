@@ -214,4 +214,3 @@ void init_symtab(void) {
     insert_symbol(strdup(s), REG, INT, NO_ATR, NO_ATR);
   }
 }
-

@@ -5,6 +5,7 @@
 #define TRUE  1
 #define FALSE 0
 
+
 #define SYMBOL_TABLE_LENGTH   64
 #define NO_INDEX              -1
 #define NO_ATR                 0
@@ -16,6 +17,7 @@
 #define FUN_REG               21
 #define CHAR_BUFFER_LENGTH   128
 extern char char_buffer[CHAR_BUFFER_LENGTH];
+
 
 extern int out_lin;
 //pomocni makroi za ispis

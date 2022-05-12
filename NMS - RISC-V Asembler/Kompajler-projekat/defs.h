@@ -43,8 +43,6 @@ static char *ar_instructions[] = { "add", "sub", "mul", "div",
                                    "add", "sub", "mul", "divu" };
 
 
-/*static char *ar_instructions[] = { "ADDS", "SUBS", "MULS", "DIVS",
-                                   "ADDU", "SUBU", "MULU", "DIVU" };*/
 
 //konstante relacionih operatora
 enum relops { LT, GT, LE, GE, EQ, NE, RELOP_NUMBER };
@@ -57,11 +55,4 @@ static char* opp_jumps[]={"bge", "ble", "bgt", "blt", "bne ", "beq ",
                           "bgeu", "blue", "bgtu", "bltu", "bne ", "beq "};
 						  
 						  
-						  
-
-/*static char* jumps[]={"JLTS", "JGTS", "JLES", "JGES", "JEQ ", "JNE ",
-                      "JLTU", "JGTU", "JLEU", "JGEU", "JEQ ", "JNE " };
-
-static char* opp_jumps[]={"JGES", "JLES", "JGTS", "JLTS", "JNE ", "JEQ ",
-                          "JGEU", "JLEU", "JGTU", "JLTU", "JNE ", "JEQ "};*/
 #endif

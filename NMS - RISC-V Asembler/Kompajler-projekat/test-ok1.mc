@@ -1,6 +1,13 @@
 //OPIS: obican for
 //RETURN: 128
 
+int f(int p){
+	int a;
+	a = 2;
+	
+	return p + a;
+}
+
 int fun(int a){
 	int b;
 	int c;
@@ -41,13 +48,22 @@ int main(){
 	int k;
 	int h;
 	
+	
 	i = 4;
 	j = 5;
-	i = fun(j); //26
-	g = fun1(i) + i; //78
+	
+	//i = f(i + j);
+	
+	if(i < j)
+		i = 1;
+	else
+		i = 2;
+	
+	//i = fun(j); //26
+	//g = fun1(i) + i; //78
 	
 	
-	g = g + i * 3 / 2; //156
+	//g = g + i * 3 / 2; //156
 	
 	if(i < j)
 		i = 2;

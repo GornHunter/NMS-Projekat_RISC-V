@@ -197,7 +197,6 @@ body
 		  code("\n\t\taddi\tsp, sp, -%d", 4 * var_num);
 		  
 		  
-		  
 		  int tmp = var_num;
 		  int reg = take_reg();
 		  
@@ -214,20 +213,6 @@ body
 			tmp -= 1;
 		  }
 		  
-		  /*for(int i = 0;i < var_num;i++){
-			if((reg = take_reg()) != i && i == 0){
-				free_if_reg(reg);
-				free_if_reg(0);
-				reg = take_reg();
-			}
-
-			
-			code("\n\t\tsw\t\t");
-			gen_sym_name(reg);
-			code(", %d(sp)", (4 * tmp) - 4);
-			tmp -= 1;
-		  }*/
-		  
 		  if(strcmp(get_name(fun_idx), "main") == 0)
 			code("\n\t\tla\t\t%s, arr", get_name(HELP_REG));
 		}
@@ -237,13 +222,6 @@ body
 			for(int i = reg;i >=0;i--){
 				free_if_reg(i);
 			}
-			
-			/*if(reg > 0){
-				free_if_reg(reg);
-				free_if_reg(0);
-			}
-			else
-				free_if_reg(reg);*/
 		}
 		
         code("\n%s_body:", get_name(fun_idx));
@@ -293,9 +271,6 @@ for_statement
 	  if(get_type(i) != get_type($5))
 	    err("incompatible types");
 		
-
-	  //gen_mov($5, i);
-	  
 	  
 	  code("\n\n\t\tli\t\t");
 	  gen_sym_name(i);
@@ -307,7 +282,6 @@ for_statement
 	}
   _SEMICOLON rel_exp
     {
-	  //code("\n\t\t%s\t\t@exit_for%d", opp_jumps[$8], $<i>6);
 	  code("for_exit%d", $<i>6);
 	}
   _SEMICOLON _ID _INC _RPAREN statement
@@ -315,11 +289,6 @@ for_statement
 	  int i = lookup_symbol($11, VAR|PAR);
 	  if(i == NO_INDEX)
 	    err("'%s' undeclared", $11);
-		
-	  /*if(get_type(i) == INT)
-	    code("\n\t\tADDS\t");
-	  else
-	    code("\n\t\tADDU\t");*/
 		
 	  code("\n\t\taddi\t");
 		
@@ -344,7 +313,6 @@ while_statement
 	}
   _LPAREN rel_exp
     {
-	  //code("\n\t\t%s\t@exit_while%d", opp_jumps[$4], $<i>2);
 	  code("while_exit%d", $<i>2);
 	}
   _RPAREN statement
@@ -372,7 +340,6 @@ assignment_statement
 		
 		
 		if(get_kind($3) == LIT){
-		  //code("\n\t\tli\t\t%s", get_name(get_atr1(idx) - fun_flag));
 		  code("\n\t\tli\t\t");
 		  gen_sym_name(idx);
 		  code(", ");
@@ -393,10 +360,6 @@ assignment_statement
 		else{
 		  gen_mov_risc(idx, $3);
 		}
-		
-		
-			
-        //gen_mov($3, idx);
       }
   ;
 
@@ -418,7 +381,6 @@ num_exp
 			code("\n\t\taddi\t");
 		else if(get_kind($3) == LIT && $2 == 2){
 			multiplication_num++;
-			//mul_flag = 1;
 			
 			
 			code("\n");
@@ -450,11 +412,6 @@ num_exp
 			code(", %s\n", get_name($3));
 			
 			code("mul%d:\n", multiplication_num);
-			/*code("\t\tbeq\t\t");
-			gen_sym_name($$);
-			code(", ");
-			gen_sym_name(reg2);
-			code(", mul%d_end\n", multiplication_num);*/
 			
 			code("\t\tadd\t\t");
 			gen_sym_name($$);
@@ -482,7 +439,6 @@ num_exp
 		}
 		else if(get_kind($3) == LIT && $2 == 3){
 			division_num++;
-			//div_flag = 1;
 			
 			code("\n");
 			if(get_kind($1) == PAR){
@@ -553,8 +509,6 @@ num_exp
 				code("-%s", get_name($3));
 			else
 				gen_sym_name($3);
-				
-			print_symtab();
 		}
       }
   ;
@@ -571,8 +525,6 @@ exp
       {
         $$ = take_reg();
 		gen_mov_risc($$, FUN_REG);
-		
-        //gen_mov(FUN_REG, $$);
       }
   | _LPAREN num_exp _RPAREN
       { $$ = $2; }
@@ -581,11 +533,10 @@ exp
 	  int out = take_reg();
 	  ++ternary_num;
 	  
-	
+	  
 	  if(get_type($5) != get_type($7))
 	    err("expressions don't have same types in ternary exp");
 		
-	  //code("\n\n\t\t%s\t@false_ternary%d", opp_jumps[$2], ternary_num);
 	  code("ternary_false%d", ternary_num);
 	  code("\nternary_true%d:", ternary_num);
 	  
@@ -598,9 +549,6 @@ exp
 	  }
 	  else
 		gen_mov_risc(out, $5);
-	  
-	  
-	  //gen_mov($5, out);
 	  
 	  
 	  code("\n\t\tj\t\tternary_exit%d", ternary_num);
@@ -616,8 +564,7 @@ exp
 	  else
 		gen_mov_risc(out, $7);
 	  
-	  
-	  //gen_mov($7, out);
+
 	  code("\nternary_exit%d:", ternary_num);
 	  $$ = out;
 	}
@@ -678,8 +625,6 @@ function_call
 		  code("\n");
 		}
 		
-        //if($4 > 0)
-          //code("\n\t\tADDS\t%%15,$%d,%%15", $4 * 4);
         set_type(FUN_REG, get_type(fcall_idx));
         $$ = FUN_REG;
 		
@@ -700,9 +645,6 @@ arguments
 argument
   : num_exp
     { 
-      //if(get_atr2(fcall_idx) != get_type($1))
-        //err("incompatible type for argument");
-		
 	  if(parameter_map[fcall_idx][arg_counter] != get_type($1))
 		err("incompatible type for argument in '%s'", get_name(fcall_idx));
       free_if_reg($1);
@@ -716,25 +658,27 @@ argument
 		code(", ");
 		gen_sym_name($1);
 	  }
+	  if(get_kind($1) == REG){
+		code("\n\t\tmv\t\t");
+		gen_sym_name(FUN_REG + arg_counter);
+		code(", ");
+		gen_sym_name($1);
+	  }
 	  
-   
-      //$$ = 1;
 	  arg_counter += 1;
-	  
-	  //slucaj gde se sme koristiti samo jedan parametar u funkciji, dodati iznad num_exp
-	  //: /* empty */
-		//{ $$ = 0; }
     }
   ;
 
 if_statement
   : if_part %prec ONLY_IF
-      { code("\nif_exit%d:", $1);
+      { 
+		code("\nif_exit%d:", $1);
 		free_if_reg(if_reg);
 	  }
 
   | if_part _ELSE statement
-      { code("\nif_exit%d:", $1);
+      { 
+		code("\nif_exit%d:", $1);
 		free_if_reg(if_reg);
 	  }
   ;
@@ -743,14 +687,12 @@ if_part
   : _IF _LPAREN
       {
         $<i>$ = ++if_num;
-		
-		//if_reg = take_reg();
+
 		if_flag = 1;
         code("\nif%d:", if_num);
       }
     rel_exp
       {
-        //code("\n\t\t%s\t\tif_false%d", opp_jumps[$4], $<i>3);
 		code("if_false%d", $<i>3);
         code("\nif_true%d:", $<i>3);
       }
